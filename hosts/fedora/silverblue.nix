@@ -63,6 +63,7 @@
       (nerdfonts.override { fonts = [ "FiraCode" ]; })
 
       # CLI tools
+      chezmoi
       eza
       fish
       fzf
@@ -118,17 +119,17 @@
     home-manager.enable = true;
 
     # Configure git
-    git = {
-      enable = true;
-      userName = "Shantanu Shukla";
-      userEmail = "shantanu.shukla10@gmail.com";
-      extraConfig = {
-        # Sign all commits using ssh key
-        commit.gpgsign = true;
-        gpg.format = "ssh";
-        user.signingkey = "~/.ssh/id_ed25519.pub";
-      };
-    };
+    # git = {
+    #   enable = true;
+    #   userName = "Shantanu Shukla";
+    #   userEmail = "shantanu.shukla10@gmail.com";
+    #   extraConfig = {
+    #     # Sign all commits using ssh key
+    #     commit.gpgsign = true;
+    #     gpg.format = "ssh";
+    #     user.signingkey = "~/.ssh/id_ed25519.pub";
+    #   };
+    # };
 
     # Configure neovim
     neovim = {
