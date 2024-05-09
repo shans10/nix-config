@@ -38,17 +38,11 @@
     };
   };
 
-  nix = {
-    package = pkgs.nix;
-    gc = {
-      automatic = true;
-      options = "--delete-older-than 3d";
-    };
-    settings = {
-      auto-optimise-store = true;
-      experimental-features = [ "nix-command" "flakes" ];
-      warn-dirty = false;
-    };
+  # Automatic garbage collection
+  nix.gc = {
+    automatic = true;
+    frequency = "weekly";
+    options = "--delete-older-than 3d";
   };
 
   # Home Manager needs a bit of information about you and the paths it should
@@ -60,7 +54,7 @@
     # Install packages
     packages = with pkgs; [
       # Fonts
-      (nerdfonts.override { fonts = [ "FiraCode" ]; })
+      (nerdfonts.override {fonts = ["JetBrainsMono"];})
 
       # CLI tools
       chezmoi
@@ -74,16 +68,32 @@
       zoxide
     ];
 
-    # Extra configuration
+    # Activation scripts to setup additional configurations
     activation = with lib; {
+      # Setup dotfiles
+      setupDotfiles = lib.hm.dag.entryAfter ["installPackages"] ''
+        chezmoi_dir="${config.xdg.dataHome}/chezmoi"
+        nvim_dir="${config.xdg.configHome}/nvim"
+
+        # clone and apply dotfiles using chezmoi if they don't exist
+        if ! [ -d $chezmoi_dir ]; then
+          $DRY_RUN_CMD ${pkgs.chezmoi}/bin/chezmoi init shans10 --branch "fedora-silverblue" --apply
+        fi
+
+        # clone neovim config if it doesn't exist
+        if ! [ -d $nvim_dir ]; then
+          $DRY_RUN_CMD /usr/bin/git clone https://github.com/shans10/astronvim-config.git $nvim_dir
+        fi
+      '';
+
       # Some software requires fonts to be present in $XDG_DATA_HOME/fonts in
       # order to use/see them (like Emacs, Flatpak), so just link to them.
-      setupFonts = hm.dag.entryAfter [ "writeBoundary" ] ''
+      setupFonts = hm.dag.entryAfter ["writeBoundary"] ''
         fontsdir="${config.home.profileDirectory}/share/fonts"
         userfontsdir="${config.xdg.dataHome}/fonts"
 
         # create 'userfontsdir' if it doesn't exist
-        if ! [ -d "${config.xdg.dataHome}/fonts" ]; then
+        if ! [ -d $userfontsdir ]; then
           $DRY_RUN_CMD mkdir $userfontsdir
         fi
 
@@ -102,15 +112,6 @@
         done
       '';
     };
-
-    # This value determines the Home Manager release that your configuration is
-    # compatible with. This helps avoid breakage when a new Home Manager release
-    # introduces backwards incompatible changes.
-    #
-    # You should not change this value, even if you update Home Manager. If you do
-    # want to update the value, then make sure to first check the Home Manager
-    # release notes.
-    stateVersion = "23.11"; # Please read the comment before changing.
   };
 
   # Configure programs
@@ -146,4 +147,13 @@
 
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
+
+  # This value determines the Home Manager release that your configuration is
+  # compatible with. This helps avoid breakage when a new Home Manager release
+  # introduces backwards incompatible changes.
+  #
+  # You should not change this value, even if you update Home Manager. If you do
+  # want to update the value, then make sure to first check the Home Manager
+  # release notes.
+  home.stateVersion = "23.11"; # Please read the comment before changing.
 }
