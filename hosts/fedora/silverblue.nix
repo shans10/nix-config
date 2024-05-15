@@ -51,6 +51,43 @@
     username = "shan";
     homeDirectory = "/var/home/shan";
 
+    # Manage dotfiles
+    file = {
+      ".config/nsxiv/exec/key-handler" = {
+        text = ''
+          #!/usr/bin/env bash
+
+          rotate() {
+              degree="$1"
+              convert -rotate "$degree" "$file" "$file"
+          }
+
+          while read file
+          do
+              case "$1" in
+                  "d")
+                      gio trash "$file" && notify-send -a "Nsxiv" -i nsxiv "$file moved to Trash."
+                  ;;
+                  "w")
+                      gsettings set org.gnome.desktop.background picture-uri-dark $file
+                      # notify-send -a "Nsxiv" -i nsxiv "Wallpaper changed." && exit 0
+                  ;;
+                  "7")
+                      rotate 270
+                  ;;
+                  "8")
+                      rotate 180
+                  ;;
+                  "9")
+                      rotate 90
+                  ;;
+                  esac
+          done
+        '';
+        executable = true;
+      };
+    };
+
     # Install packages
     packages = with pkgs; [
       # Fonts
@@ -59,12 +96,11 @@
       # CLI tools
       chezmoi
       eza
-      fish
+      fastfetch
       fzf
-      gcc
+      ripgrep
       starship
       nsxiv
-      wl-clipboard
       zoxide
     ];
 
@@ -138,12 +174,16 @@
       defaultEditor = true;
       vimAlias = true;
       extraPackages = with pkgs; [
+        gcc
         lazygit
-        ripgrep
         tree-sitter
+        wl-clipboard
       ];
     };
   };
+
+  # Enable fontconfig
+  fonts.fontconfig.enable = true;
 
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
