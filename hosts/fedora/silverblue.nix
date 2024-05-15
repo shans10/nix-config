@@ -53,36 +53,38 @@
 
     # Manage dotfiles
     file = {
+      # Nsxiv key-handler executable
       ".config/nsxiv/exec/key-handler" = {
         text = ''
           #!/usr/bin/env bash
 
-          rotate() {
-              degree="$1"
-              convert -rotate "$degree" "$file" "$file"
-          }
-
           while read file
           do
               case "$1" in
+                  # Move file to trash
                   "d")
                       gio trash "$file" && notify-send -a "Nsxiv" -i nsxiv "$file moved to Trash."
                   ;;
+                  # Change wallpaper in Gnome
                   "w")
                       gsettings set org.gnome.desktop.background picture-uri-dark $file
                       # notify-send -a "Nsxiv" -i nsxiv "Wallpaper changed." && exit 0
                   ;;
-                  "7")
-                      rotate 270
-                  ;;
-                  "8")
-                      rotate 180
-                  ;;
-                  "9")
-                      rotate 90
-                  ;;
                   esac
           done
+        '';
+        executable = true;
+      };
+
+      # Small script to use nsxiv as wallpaper viewer/changer in Gnome
+      ".local/bin/wallpaper" = {
+        text = ''
+          #!/usr/bin/bash
+
+          # Show all wallpapers from ~/Pictures/Wallpapers in nsxiv
+          test -d ~/Pictures/Wallpapers && nsxiv -t ~/Pictures/Wallpapers ||
+          # Send error notification if directory doesn't exist
+          notify-send -a "Nsxiv" -i nsxiv "ERROR" "Wallpapers directory not found in ~/Pictures."
         '';
         executable = true;
       };
@@ -124,29 +126,29 @@
 
       # Some software requires fonts to be present in $XDG_DATA_HOME/fonts in
       # order to use/see them (like Emacs, Flatpak), so just link to them.
-      setupFonts = hm.dag.entryAfter ["writeBoundary"] ''
-        fontsdir="${config.home.profileDirectory}/share/fonts"
-        userfontsdir="${config.xdg.dataHome}/fonts"
-
-        # create 'userfontsdir' if it doesn't exist
-        if ! [ -d $userfontsdir ]; then
-          $DRY_RUN_CMD mkdir $userfontsdir
-        fi
-
-        # remove dead symlinks due to uninstalled font (e.g. all opentype fonts
-        # are gone, leading to a broken link), etc.
-        $DRY_RUN_CMD find $userfontsdir -xtype l \
-          -exec echo unlinking {} \; -exec unlink {} \;
-
-        # force necessary because of the many different fonts in colliding
-        # directories
-        for dir in $fontsdir/*; do
-          $DRY_RUN_CMD unlink \
-            $userfontsdir/$(basename $dir) 2>/dev/null || true
-          $DRY_RUN_CMD ln -sf $VERBOSE_ARG \
-            $dir $userfontsdir/$(basename $dir)
-        done
-      '';
+      # setupFonts = hm.dag.entryAfter ["writeBoundary"] ''
+      #   fontsdir="${config.home.profileDirectory}/share/fonts"
+      #   userfontsdir="${config.xdg.dataHome}/fonts"
+      #
+      #   # create 'userfontsdir' if it doesn't exist
+      #   if ! [ -d $userfontsdir ]; then
+      #     $DRY_RUN_CMD mkdir $userfontsdir
+      #   fi
+      #
+      #   # remove dead symlinks due to uninstalled font (e.g. all opentype fonts
+      #   # are gone, leading to a broken link), etc.
+      #   $DRY_RUN_CMD find $userfontsdir -xtype l \
+      #     -exec echo unlinking {} \; -exec unlink {} \;
+      #
+      #   # force necessary because of the many different fonts in colliding
+      #   # directories
+      #   for dir in $fontsdir/*; do
+      #     $DRY_RUN_CMD unlink \
+      #       $userfontsdir/$(basename $dir) 2>/dev/null || true
+      #     $DRY_RUN_CMD ln -sf $VERBOSE_ARG \
+      #       $dir $userfontsdir/$(basename $dir)
+      #   done
+      # '';
     };
   };
 
