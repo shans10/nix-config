@@ -178,7 +178,6 @@
       extraPackages = with pkgs; [
         gcc
         lazygit
-        tree-sitter
         wl-clipboard
       ];
     };
