@@ -100,55 +100,64 @@
       eza
       fastfetch
       fzf
+      nsxiv
       ripgrep
       starship
-      nsxiv
+      sassc
       zoxide
     ];
 
     # Activation scripts to setup additional configurations
     activation = with lib; {
-      # Setup dotfiles
+      # Setup dotfiles using chezmoi
       setupDotfiles = lib.hm.dag.entryAfter ["installPackages"] ''
         chezmoi_dir="${config.xdg.dataHome}/chezmoi"
-        nvim_dir="${config.xdg.configHome}/nvim"
 
-        # clone and apply dotfiles using chezmoi if they don't exist
-        if ! [ -d $chezmoi_dir ]; then
+        # Clone and apply dotfiles using chezmoi if they don't exist
+        if [ ! -d $chezmoi_dir ]; then
           $DRY_RUN_CMD ${pkgs.chezmoi}/bin/chezmoi init shans10 --branch "fedora-silverblue" --apply
-        fi
-
-        # clone neovim config if it doesn't exist
-        if ! [ -d $nvim_dir ]; then
-          $DRY_RUN_CMD /usr/bin/git clone https://github.com/shans10/astronvim-config.git $nvim_dir
         fi
       '';
 
       # Some software requires fonts to be present in $XDG_DATA_HOME/fonts in
       # order to use/see them (like Emacs, Flatpak), so just link to them.
-      # setupFonts = hm.dag.entryAfter ["writeBoundary"] ''
-      #   fontsdir="${config.home.profileDirectory}/share/fonts"
-      #   userfontsdir="${config.xdg.dataHome}/fonts"
-      #
-      #   # create 'userfontsdir' if it doesn't exist
-      #   if ! [ -d $userfontsdir ]; then
-      #     $DRY_RUN_CMD mkdir $userfontsdir
-      #   fi
-      #
-      #   # remove dead symlinks due to uninstalled font (e.g. all opentype fonts
-      #   # are gone, leading to a broken link), etc.
-      #   $DRY_RUN_CMD find $userfontsdir -xtype l \
-      #     -exec echo unlinking {} \; -exec unlink {} \;
-      #
-      #   # force necessary because of the many different fonts in colliding
-      #   # directories
-      #   for dir in $fontsdir/*; do
-      #     $DRY_RUN_CMD unlink \
-      #       $userfontsdir/$(basename $dir) 2>/dev/null || true
-      #     $DRY_RUN_CMD ln -sf $VERBOSE_ARG \
-      #       $dir $userfontsdir/$(basename $dir)
-      #   done
-      # '';
+      setupFonts = hm.dag.entryAfter ["writeBoundary"] ''
+        fontsdir="${config.home.profileDirectory}/share/fonts"
+        userfontsdir="${config.xdg.dataHome}/fonts"
+
+        ### SIMPLER APPROACH: Symlinking entire fonts folder ###
+        #
+        # If user fonts dir exists, delete it
+        if [ -d $userfontsdir ]; then
+          rm -rf $userfontsdir
+        fi
+
+        # Create symlink if it doesn't exist
+        if [ ! -L $userfontsdir ] && [ ! -e $userfontsdir ]; then
+          $DRY_RUN_CMD ln -s $fontsdir $userfontsdir
+        fi
+
+        # ### HARDER APPROACH: Symlinking individual fonts ###
+        # #
+        # # Create 'userfontsdir' if it doesn't exist
+        # if [ ! -d $userfontsdir ]; then
+        #   $DRY_RUN_CMD mkdir $userfontsdir
+        # fi
+        #
+        # # Remove dead symlinks due to uninstalled font (e.g. all opentype fonts
+        # # are gone, leading to a broken link), etc.
+        # $DRY_RUN_CMD find $userfontsdir -xtype l \
+        #   -exec echo unlinking {} \; -exec unlink {} \;
+        #
+        # # Force necessary because of the many different fonts in colliding
+        # # directories
+        # for dir in $fontsdir/*; do
+        #   $DRY_RUN_CMD unlink \
+        #     $userfontsdir/$(basename $dir) 2>/dev/null || true
+        #   $DRY_RUN_CMD ln -sf $VERBOSE_ARG \
+        #     $dir $userfontsdir/$(basename $dir)
+        # done
+      '';
     };
   };
 
