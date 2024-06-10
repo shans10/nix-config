@@ -182,6 +182,7 @@
     # Configure helix
     helix = {
       enable = true;
+      # defaultEditor = true;
       extraPackages = with pkgs; [
         wl-clipboard
         alejandra
@@ -191,7 +192,7 @@
     # Configure neovim
     neovim = {
       enable = true;
-      defaultEditor = true;
+      # defaultEditor = true;
       vimAlias = true;
       extraPackages = with pkgs; [
         gcc
