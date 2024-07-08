@@ -1,5 +1,5 @@
 {
-  description = "My starter nix config for Fedora Silverblue";
+  description = "My starter nix flake for home-manger";
 
   inputs = {
     # Nixpkgs
@@ -30,6 +30,12 @@
         pkgs = nixpkgs.legacyPackages.x86_64-linux;
         extraSpecialArgs = {inherit inputs outputs;};
         modules = [./hosts/fedora/silverblue.nix];
+      };
+
+      slowroll = home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        extraSpecialArgs = {inherit inputs outputs;};
+        modules = [./hosts/opensuse/slowroll.nix];
       };
     };
   };
